@@ -1,0 +1,12 @@
+# Segredos (NUNCA suba sua API key!)
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sistema
+.DS_Store
+Thumbs.db

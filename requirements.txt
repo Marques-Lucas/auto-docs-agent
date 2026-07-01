@@ -1,0 +1,4 @@
+# Dependencias do projeto. Instale com:  pip install -r requirements.txt
+
+groq            # SDK oficial da Groq (fala com a LLM)
+python-dotenv   # le a API key do arquivo .env
