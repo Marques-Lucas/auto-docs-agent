@@ -6,11 +6,10 @@ so mexe neste arquivo e o resto do agente nem percebe.
 
 Documentacao rapida da Groq: https://console.groq.com/docs/quickstart
 """
-
 import os
 from dotenv import load_dotenv
 
-# from groq import Groq   # TODO: descomente depois de 'pip install groq'
+from groq import Groq   
 
 load_dotenv()  # carrega as variaveis do arquivo .env pra dentro do os.environ
 
@@ -29,5 +28,13 @@ def chamar_llm(prompt, system=None):
     5. Chame:             resposta = client.chat.completions.create(model=modelo, messages=...)
     6. Retorne:           resposta.choices[0].message.content
     """
-    # TODO: implementar
-    pass
+    api_key = os.getenv("GROQ_API_KEY")
+    modelo = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    client = Groq(api_key=api_key)
+    mensagens = []
+    if system:
+       mensagens.append({"role": "system","content": system})
+    mensagens.append({'role': 'user','content': prompt})
+    resposta = client.chat.completions.create( model = modelo,messages = mensagens)
+    return resposta.choices[0].message.content
+     
