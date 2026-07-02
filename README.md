@@ -114,8 +114,8 @@ As variáveis ficam no arquivo `.env` (veja `.env.example`):
 
 ## 🗺️ Roadmap
 
-- [ ] `llm_client.py` — implementar `chamar_llm()` (base de tudo)
-- [ ] `repo_reader.py` — `listar_arquivos()`, `ler_conteudo_arquivos()`, `pegar_git_log()`
+- [x] `llm_client.py` — implementar `chamar_llm()` (base de tudo)
+- [x] `repo_reader.py` — `listar_arquivos()`, `ler_conteudo_arquivos()`, `pegar_git_log()`
 - [ ] `prompts.py` — `prompt_readme()` e `prompt_changelog()`
 - [ ] `doc_generator.py` — `gerar_readme()`, `gerar_changelog()`, `salvar_arquivo()`
 - [ ] `main.py` — conectar o CLI (ler o caminho de `sys.argv`)

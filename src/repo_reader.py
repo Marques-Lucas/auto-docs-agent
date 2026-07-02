@@ -30,8 +30,24 @@ def listar_arquivos(caminho_repo):
     - Filtre por EXTENSOES_CODIGO pra nao pegar imagem, binario, etc.
     - Retorne uma lista de objetos Path (ou de strings, voce escolhe).
     """
-    # TODO: implementar
-    pass
+    resultados = []
+    
+    for item in Path(caminho_repo).rglob("*"):
+        pular = False
+        for parte in item.parts:
+          if parte in PASTAS_IGNORADAS:
+            pular = True    
+        if pular: 
+            continue
+        if item.suffix not in EXTENSOES_CODIGO:
+            continue
+
+        resultados.append(item)
+
+    return resultados    
+
+
+    
 
 
 def ler_conteudo_arquivos(lista_de_arquivos, max_chars=3000):
@@ -47,8 +63,16 @@ def ler_conteudo_arquivos(lista_de_arquivos, max_chars=3000):
     - Cuidado com encoding: use open(arquivo, encoding="utf-8", errors="ignore").
     - Retorne uma string unica.
     """
-    # TODO: implementar
-    pass
+    texto_final = ""
+    for arquivo in lista_de_arquivos:
+     with open(arquivo, encoding="utf-8", errors="ignore") as f:
+         conteudo = f.read()
+
+         conteudo = conteudo[:max_chars]
+         texto_final += f"=== {arquivo} ===\n{conteudo}\n\n"
+
+    return texto_final    
+
 
 
 def pegar_git_log(caminho_repo, qtd_commits=20):
@@ -64,5 +88,16 @@ def pegar_git_log(caminho_repo, qtd_commits=20):
     - O texto do log fica em resultado.stdout.
     - Se o repo nao tiver git, trate o erro e retorne uma string vazia ou aviso.
     """
-    # TODO: implementar
-    pass
+    try:
+       resultado = subprocess.run(
+       ["git", "-C", caminho_repo, "log", f"-{qtd_commits}",
+             "--pretty=format:%h %s (%an)"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8"
+        )
+       return resultado.stdout
+    except Exception:
+        return ""
+       
+
