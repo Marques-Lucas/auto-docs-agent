@@ -16,21 +16,28 @@ Fluxo geral (o que este arquivo deve orquestrar):
 
 import sys
 
-# TODO: descomente estes imports quando os modulos estiverem prontos
-# from doc_generator import gerar_readme, gerar_changelog
+from doc_generator import gerar_readme, gerar_changelog
 
 
 def main():
-    # TODO 1: pegar o caminho do repositorio de sys.argv.
-    #         - sys.argv[0] e o nome do script; o caminho vem em sys.argv[1].
-    #         - Se o usuario nao passar nada, mostre uma mensagem de ajuda e de sys.exit().
+    # 1. Pega o caminho do repositorio que veio no terminal.
+    #    sys.argv[0] e o nome do script; o caminho vem em sys.argv[1].
+    if len(sys.argv) < 2:
+        print("Uso: python src/main.py <caminho_do_repositorio>")
+        sys.exit(1)
 
-    # TODO 2: chame gerar_readme(caminho) do doc_generator.
+    caminho = sys.argv[1]
 
-    # TODO 3 (opcional): chame gerar_changelog(caminho) tambem.
+    # 2. Gera o README a partir do repositorio.
+    print(f"Lendo o repositorio em: {caminho}")
+    caminho_readme = gerar_readme(caminho)
+    print(f"README gerado em: {caminho_readme}")
 
-    # TODO 4: imprima no terminal uma mensagem tipo "README gerado em ...".
-    print("Auto Docs Agent - esqueleto ainda vazio. Preencha os TODOs :)")
+    # 3. Gera o CHANGELOG a partir do git log.
+    caminho_changelog = gerar_changelog(caminho)
+    print(f"CHANGELOG gerado em: {caminho_changelog}")
+
+    print("Pronto!")
 
 
 if __name__ == "__main__":

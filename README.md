@@ -5,7 +5,7 @@ Agente em Python que **lê um repositório de código, analisa os arquivos e o h
 > **Problema:** documentar dá preguiça, e a maioria dos projetos fica com um README pela metade.
 > **Solução:** deixar a IA rascunhar a documentação a partir do próprio código, para o dev só revisar.
 
-> ⚠️ **Status:** em desenvolvimento (MVP). A arquitetura e os módulos já estão definidos; a implementação está sendo feita commit por commit. Consulte o [Roadmap](#-roadmap) para o andamento.
+> ✅ **Status:** MVP **funcionando de ponta a ponta**. Todos os cinco módulos (`main`, `repo_reader`, `llm_client`, `prompts`, `doc_generator`) estão implementados e o agente já gerou `README.md` + `CHANGELOG.md` reais a partir de um repositório de teste, usando a Groq. Consulte o [Roadmap](#-roadmap) para os próximos passos (evoluções pós-MVP).
 
 ---
 
@@ -116,10 +116,10 @@ As variáveis ficam no arquivo `.env` (veja `.env.example`):
 
 - [x] `llm_client.py` — implementar `chamar_llm()` (base de tudo)
 - [x] `repo_reader.py` — `listar_arquivos()`, `ler_conteudo_arquivos()`, `pegar_git_log()`
-- [ ] `prompts.py` — `prompt_readme()` e `prompt_changelog()`
-- [ ] `doc_generator.py` — `gerar_readme()`, `gerar_changelog()`, `salvar_arquivo()`
-- [ ] `main.py` — conectar o CLI (ler o caminho de `sys.argv`)
-- [ ] Testar em um repositório pequeno (comparar antes/depois)
+- [x] `prompts.py` — `prompt_readme()` e `prompt_changelog()`
+- [x] `doc_generator.py` — `gerar_readme()`, `gerar_changelog()`, `salvar_arquivo()`
+- [x] `main.py` — conectar o CLI (ler o caminho de `sys.argv`)
+- [x] Testar em um repositório pequeno (comparar antes/depois) — **funcionou de ponta a ponta com a Groq real** (02/07/2026)
 
 ### Evoluções (pós-MVP)
 

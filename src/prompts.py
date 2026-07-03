@@ -26,8 +26,24 @@ def prompt_readme(contexto_do_repo):
         - Estrutura de pastas
     Termine o prompt colando o 'contexto_do_repo'.
     """
-    # TODO: retornar a string do prompt
-    pass
+    texto = f"""Escreva um arquivo README.md completo, em portugues e em Markdown,
+para o projeto descrito no contexto abaixo.
+
+Inclua obrigatoriamente estas secoes:
+- Titulo do projeto e uma descricao curta do que ele faz
+- Stack / tecnologias usadas
+- Como instalar (dependencias) e como rodar o projeto
+- Estrutura de pastas e principais arquivos
+
+Regras:
+- Use apenas informacoes presentes no contexto; nao invente nada.
+- Se alguma informacao nao existir no contexto, apenas omita a secao.
+- Responda somente com o conteudo do README em Markdown, sem comentarios extras.
+
+Contexto do repositorio:
+{contexto_do_repo}
+"""
+    return texto
 
 
 def prompt_changelog(git_log):
@@ -37,5 +53,17 @@ def prompt_changelog(git_log):
     Dica: peca pra agrupar as mudancas (ex: Novidades, Correcoes, Melhorias)
     e usar o formato de changelog com data/versao se der.
     """
-    # TODO: retornar a string do prompt
-    pass
+    texto = f"""Gere um arquivo CHANGELOG.md em portugues e em Markdown a partir
+do historico de commits (git log) fornecido abaixo.
+
+Regras:
+- Agrupe as mudancas por tipo: Novidades, Correcoes e Melhorias.
+- Reescreva cada commit em uma linha curta e clara para o usuario final.
+- Quando houver datas no historico, use-as para organizar as entradas.
+- Use apenas informacoes presentes no git log; nao invente nada.
+- Responda somente com o conteudo do CHANGELOG em Markdown, sem comentarios extras.
+
+Historico de commits (git log):
+{git_log}
+"""
+    return texto
