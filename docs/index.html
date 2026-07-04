@@ -241,7 +241,7 @@
       <div class="input-row">
         <label class="ghfield">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-          <input id="repoUrl" value="github.com/Marques-Lucas/repo-de-teste" spellcheck="false" aria-label="URL do repositório">
+          <input id="repoUrl" value="github.com/Marques-Lucas/auto-docs-agent" spellcheck="false" aria-label="URL do repositório">
         </label>
         <button class="btn btn-primary" id="genBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg>
@@ -258,9 +258,9 @@
 
       <div class="samples">
         <span>Exemplos:</span>
-        <button class="chip" onclick="setRepo('github.com/Marques-Lucas/repo-de-teste')">repo-de-teste</button>
-        <button class="chip" onclick="setRepo('github.com/vercel/next.js')">vercel/next.js</button>
-        <button class="chip" onclick="setRepo('github.com/pallets/flask')">pallets/flask</button>
+        <button class="chip" onclick="setRepo('github.com/Marques-Lucas/auto-docs-agent')">auto-docs-agent</button>
+        <button class="chip" onclick="setRepo('github.com/psf/requests')">psf/requests</button>
+        <button class="chip" onclick="setRepo('github.com/pallets/click')">pallets/click</button>
       </div>
     </section>
 
@@ -418,15 +418,24 @@ Execute o arquivo \`main.py\` passando a operação e os dois números:
     }
   };
 
+  // ---------- backend real ----------
+  // Em localhost/arquivo local aponta pro backend de desenvolvimento.
+  // Depois do deploy, troque a URL de producao abaixo pela do seu backend.
+  const API_BASE =
+    (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:')
+      ? 'http://127.0.0.1:8000'
+      : 'https://TROCAR-PELA-URL-DO-BACKEND';   // <- ajustar apos o deploy
+
   const STEPS = [
-    ['Clonando repositório','github.com/Marques-Lucas/repo-de-teste'],
-    ['Lendo arquivos de código','2 arquivos · src/*.py'],
-    ['Analisando histórico','git log · 4 commits'],
-    ['Gerando com Llama 3.3 70B','Groq · streaming'],
+    ['Clonando repositório','—'],
+    ['Lendo arquivos de código','—'],
+    ['Analisando histórico','git log'],
+    ['Gerando com Llama 3.3 70B','Groq'],
     ['Escrevendo documentos','README.md · CHANGELOG.md'],
   ];
 
   let current = 'readme';
+  let stepTimer = null;
 
   function stepIco(state){
     if(state==='done') return '<svg class="ico" style="color:var(--ok)" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
@@ -439,35 +448,119 @@ Execute o arquivo \`main.py\` passando a operação e os dois números:
       return `<li class="step ${st}">${stepIco(st)}<span class="lbl">${lbl}</span><span class="det">${det}</span></li>`;
     }).join('');
   }
+  function startSteps(url){
+    STEPS[0][1] = url.replace(/^https?:\/\//,'');
+    let i = 0; renderSteps(0);
+    clearInterval(stepTimer);
+    stepTimer = setInterval(()=>{ if(i < STEPS.length-1){ i++; renderSteps(i); } }, reduce?80:700);
+  }
+  function finishSteps(){ clearInterval(stepTimer); renderSteps(STEPS.length); }
 
-  function generate(){
+  // ---------- erro ----------
+  function showError(msg){
+    let e = document.getElementById('errBox');
+    if(!e){
+      e = document.createElement('div'); e.id = 'errBox';
+      e.style.cssText = 'margin-top:20px;padding:14px 16px;border:1px solid rgba(255,95,87,.4);'+
+        'background:rgba(255,95,87,.08);color:#ffb4ae;border-radius:12px;font-size:14px;'+
+        'font-family:var(--mono);line-height:1.5';
+      $('#run').parentNode.insertBefore(e, $('#run'));
+    }
+    e.textContent = '⚠ ' + msg; e.hidden = false;
+  }
+  function hideError(){ const e = document.getElementById('errBox'); if(e) e.hidden = true; }
+
+  // ---------- markdown -> html (minimalista, so o que a LLM usa) ----------
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function mdInline(s){
+    s = esc(s);
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+  function mdToHtml(md){
+    const lines = md.replace(/\r/g,'').split('\n');
+    let html = '', inList = false, inCode = false, code = '';
+    const closeList = ()=>{ if(inList){ html += '</ul>'; inList = false; } };
+    for(const raw of lines){
+      if(raw.trim().startsWith('```')){
+        if(inCode){ html += '<pre class="code">'+esc(code)+'</pre>'; code=''; inCode=false; }
+        else { closeList(); inCode = true; }
+        continue;
+      }
+      if(inCode){ code += raw + '\n'; continue; }
+      const line = raw.replace(/\s+$/,'');
+      let m;
+      if(m = line.match(/^#{1}\s+(.*)/))       { closeList(); html += '<h1>'+mdInline(m[1])+'</h1>'; }
+      else if(m = line.match(/^#{2,6}\s+(.*)/)){ closeList(); html += '<h2>'+mdInline(m[1])+'</h2>'; }
+      else if(m = line.match(/^\s*[-*+]\s+(.*)/)){ if(!inList){ html += '<ul>'; inList = true; } html += '<li>'+mdInline(m[1])+'</li>'; }
+      else if(line.trim() === '')              { closeList(); }
+      else                                     { closeList(); html += '<p>'+mdInline(line)+'</p>'; }
+    }
+    if(inCode) html += '<pre class="code">'+esc(code)+'</pre>';
+    closeList();
+    return html;
+  }
+
+  function buildDocs(data){
+    for(const k of Object.keys(DOCS)) delete DOCS[k];
+    if(data.readme)    DOCS.readme    = { file:'README.md',    raw:data.readme,    html:mdToHtml(data.readme) };
+    if(data.changelog) DOCS.changelog = { file:'CHANGELOG.md', raw:data.changelog, html:mdToHtml(data.changelog) };
+  }
+
+  async function generate(){
     const url = $('#repoUrl').value.trim();
     if(!url){ $('#repoUrl').focus(); return; }
-    STEPS[0][1] = url.replace(/^https?:\/\//,'');
+    const wantR = $('#optReadme').checked, wantC = $('#optChangelog').checked;
+    if(!wantR && !wantC){ showError('Escolha ao menos um: README.md ou CHANGELOG.md.'); return; }
+
+    hideError();
     $('#genBtn').disabled = true;
     $('#result').hidden = true;
     $('#run').hidden = false;
     $('#run').scrollIntoView({behavior: reduce?'auto':'smooth', block:'nearest'});
+    startSteps(url);
 
-    const per = reduce?60:640;
-    let i = 0;
-    renderSteps(0);
-    const tick = ()=>{
-      i++;
-      if(i<=STEPS.length){ renderSteps(i); }
-      if(i<STEPS.length){ setTimeout(tick, per); }
-      else { setTimeout(finish, reduce?60:420); }
-    };
-    setTimeout(tick, per);
+    try{
+      const resp = await fetch(API_BASE + '/gerar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ repo:url, readme:wantR, changelog:wantC }),
+      });
+      if(!resp.ok){
+        let d = 'HTTP ' + resp.status;
+        try { d = (await resp.json()).detail || d; } catch(_){}
+        throw new Error(d);
+      }
+      const data = await resp.json();
+      buildDocs(data);
+      finishSteps();
+      setTimeout(()=>finish(data), reduce?40:320);
+    }catch(err){
+      clearInterval(stepTimer);
+      $('#run').hidden = true;
+      $('#genBtn').disabled = false;
+      const net = /Failed to fetch|NetworkError|load failed/i.test(err.message||'');
+      showError(net
+        ? 'Não consegui falar com o backend. Confirme que ele está no ar (rodando o servidor).'
+        : (err.message || 'Algo deu errado.'));
+    }
   }
 
-  function finish(){
+  function finish(data){
     $('#run').hidden = true;
     $('#genBtn').disabled = false;
-    const wantR = $('#optReadme').checked, wantC = $('#optChangelog').checked;
-    document.querySelector('[data-doc=readme]').style.display = wantR?'':'none';
-    document.querySelector('[data-doc=changelog]').style.display = wantC?'':'none';
-    current = wantR ? 'readme' : 'changelog';
+    document.querySelector('[data-doc=readme]').style.display    = DOCS.readme    ? '' : 'none';
+    document.querySelector('[data-doc=changelog]').style.display = DOCS.changelog ? '' : 'none';
+    const s = (data && data.stats) || {};
+    const meta = document.querySelector('.meta');
+    if(meta) meta.innerHTML =
+      `<span class="stat">⏱ <b>${s.segundos ?? '—'}s</b></span>`+
+      `<span class="stat">📄 <b>${s.arquivos ?? '—'}</b> arquivos</span>`+
+      `<span class="stat">📝 <b>${s.commits ?? '—'}</b> commits</span>`+
+      `<span class="stat">💸 <b class="ok">R$0,00</b></span>`;
+    current = DOCS.readme ? 'readme' : 'changelog';
     selectDoc(current, true);
     $('#result').hidden = false;
     $('#result').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});
@@ -517,8 +610,6 @@ Execute o arquivo \`main.py\` passando a operação e os dois números:
     a.href = URL.createObjectURL(blob); a.download = DOCS[current].file; a.click();
     URL.revokeObjectURL(a.href);
   });
-
-  selectDoc('readme', false);
 </script>
 
 </body>
