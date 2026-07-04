@@ -22,8 +22,10 @@ A landing (`docs/index.html`) deixou de ser demo simulada e passou a chamar um b
 - `fb20bed feat(landing): conecta a demo da landing ao backend real`
 - (+ esta sessão/pendências como commit `docs:`)
 
-## Estado / o que falta
-- Backend + landing **commitados**. Working tree limpo após o commit de docs.
-- **Push ainda depende de o Lucas pedir** (commits podem estar locais ao fechar).
-- **Deploy do backend não feito** — sem ele, a demo da landing só funciona em localhost. Preencher `API_BASE` de produção depois.
-- Rebrand "Escriba" segue não propagado para README/badges.
+## Estado ao fechar (atualizado — sessão retomada/fechada em 2026-07-04)
+- Backend + landing + docs **commitados** (`caff2e7`, `fb20bed`, `8c1b68b`).
+- ✅ **Push feito** — `master` sincronizado com `origin/master`.
+- ✅ **Backend validado rodando LOCAL** (`uvicorn app:app --app-dir web --host 127.0.0.1 --port 8000`): `projetores-demo` → HTTP 200, README + CHANGELOG gerados.
+- 🔀 **Decisão: rodar só local, sem nuvem/VPS** (combina com "custo zero"). Os itens de deploy em nuvem + `API_BASE` de produção ficaram **PAUSADOS** no `pendencias.md` (pausados, não descartados — só valem se o Lucas quiser a demo pública).
+- ⚠️ Loose end desta retomada: a atualização do `pendencias.md` (run-local ✅ + itens de nuvem pausados) + este próprio arquivo ainda precisam de **commit** (o Lucas commita).
+- Rebrand "Escriba" segue não propagado para README/badges; GitHub Pages ainda não ligado.
