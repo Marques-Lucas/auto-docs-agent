@@ -1,0 +1,7 @@
+# Dependencias da camada web (backend do Escriba).
+# Instale com:  pip install -r web/requirements.txt
+
+fastapi         # framework do backend (a "API")
+uvicorn         # servidor que roda o FastAPI
+groq            # SDK da Groq (reaproveitado por src/llm_client)
+python-dotenv   # le a GROQ_API_KEY do .env em desenvolvimento
