@@ -54,8 +54,12 @@
 
   /* ---------- composer ---------- */
   .stage{padding:52px 0 60px}
-  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  .eyebrow{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--cyan);margin:0 0 16px}
+  /* Shiny Text (efeito ReactBits) — brilho passando no texto */
+  .eyebrow.shiny{color:transparent;background:linear-gradient(110deg,#3f6d74 20%,#8ff0ff 50%,#3f6d74 80%);
+    background-size:220% 100%;-webkit-background-clip:text;background-clip:text;animation:shine 3.2s linear infinite}
+  @keyframes shine{to{background-position:-220% 0}}
   h1{font-family:var(--serif);font-size:clamp(34px,6vw,60px);line-height:1.02;letter-spacing:.2px;margin:0 0 10px;
     font-weight:400;text-wrap:balance;max-width:15ch}
   h1 .g{font-style:italic;background:linear-gradient(100deg,var(--flame),var(--flame-soft));-webkit-background-clip:text;
@@ -66,8 +70,13 @@
   @keyframes draw{to{stroke-dashoffset:0}}
   .lede{color:var(--fg-dim);font-size:17px;max-width:52ch;margin:0 0 30px}
 
-  .composer{background:linear-gradient(180deg,var(--ink-2),#181B22);border:1px solid var(--ink-line);
-    border-radius:var(--r);padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.9)}
+  .composer{position:relative;overflow:hidden;background:linear-gradient(180deg,var(--ink-2),#181B22);border:1px solid var(--ink-line);
+    border-radius:var(--r);padding:20px;box-shadow:0 20px 50px -30px rgba(0,0,0,.9);transition:border-color .3s}
+  /* Spotlight Card (efeito ReactBits) — luz seguindo o cursor */
+  .composer .spot{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(162,119,255,.16),transparent 60%)}
+  .composer:hover .spot{opacity:1}
+  .composer:hover{border-color:rgba(162,119,255,.35)}
   .field-label{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;
     letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
   .input-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -199,6 +208,7 @@
     .ring{animation:none;border-top-color:var(--flame)}
     .ul path{stroke-dashoffset:0;animation:none}
     .brand .cur{animation:none}
+    .eyebrow.shiny{animation:none;color:var(--cyan);-webkit-text-fill-color:currentColor}
     .md.writing>*{animation:none;opacity:1}
     .quill.on{animation:none;opacity:0}
     *{transition:none!important}
@@ -224,7 +234,7 @@
   </header>
 
   <main class="stage">
-    <p class="eyebrow">Documentação gerada por IA · custo R$0</p>
+    <p class="eyebrow shiny">Documentação gerada por IA · custo R$0</p>
     <h1>Do <span class="g">código</span> ao README, em segundos.</h1>
     <svg class="ul" viewBox="0 0 300 16" preserveAspectRatio="none" aria-hidden="true">
       <defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#A277FF"/><stop offset="1" stop-color="#54C7D6"/></linearGradient></defs>
@@ -234,6 +244,7 @@
 
     <!-- composer -->
     <section class="composer" id="composer">
+      <span class="spot" aria-hidden="true"></span>
       <p class="field-label">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
         Repositório do GitHub
@@ -324,37 +335,63 @@
   const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
   const $ = s => document.querySelector(s);
 
-  /* ---------- fundo de tinta vivo ---------- */
-  (function ink(){
+  /* ---------- fundo Aurora (cortinas suaves de luz) — efeito ReactBits ---------- */
+  (function aurora(){
     const cv = document.getElementById('ink');
-    if(!cv || reduce) return;
+    if(!cv) return;
     const ctx = cv.getContext('2d');
     const dpr = Math.min(devicePixelRatio||1, 2);
     let w, h;
     function size(){ w = cv.width = innerWidth*dpr; h = cv.height = innerHeight*dpr; cv.style.width=innerWidth+'px'; cv.style.height=innerHeight+'px'; }
     size(); addEventListener('resize', size);
-    const cols = [[162,119,255],[122,70,230],[84,199,214]];
-    const blobs = Array.from({length:5}, (_,i)=>({
-      x:Math.random(), y:Math.random()*.45, r:.26+Math.random()*.24,
-      sx:(Math.random()-.5)*7e-5, sy:(Math.random()-.5)*4e-5,
-      c:cols[i%cols.length], a:.09+Math.random()*.06
-    }));
-    function draw(){
+    const bands = [[162,119,255],[122,70,230],[84,199,214],[194,166,255]];
+    function draw(now){
       ctx.clearRect(0,0,w,h); ctx.globalCompositeOperation='lighter';
-      for(const b of blobs){
-        b.x+=b.sx; b.y+=b.sy;
-        if(b.x<-.35)b.x=1.35; if(b.x>1.35)b.x=-.35;
-        if(b.y<-.35)b.y=.8; if(b.y>.8)b.y=-.35;
-        const R=b.r*Math.max(w,h), cx=b.x*w, cy=b.y*h;
-        const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
-        g.addColorStop(0,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},${b.a})`);
-        g.addColorStop(1,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
+      for(let i=0;i<bands.length;i++){
+        const c = bands[i];
+        const cx = (0.2 + 0.6*i/bands.length + 0.12*Math.sin(now*0.00013+i))*w;
+        const cy = (0.02 + 0.16*Math.sin(now*0.0002+i*1.7))*h;
+        const R  = (0.5 + 0.15*i)*Math.max(w,h);
+        const g = ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+        g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.10)`);
+        g.addColorStop(.5,`rgba(${c[0]},${c[1]},${c[2]},0.04)`);
+        g.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
         ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
       }
-      requestAnimationFrame(draw);
+      if(!reduce) requestAnimationFrame(draw);
     }
-    draw();
+    if(reduce) draw(3000); else requestAnimationFrame(draw);
   })();
+
+  /* ---------- Spotlight: cursor move no composer — efeito ReactBits ---------- */
+  (function spotlight(){
+    const comp = document.getElementById('composer');
+    if(!comp) return;
+    comp.addEventListener('pointermove', e=>{
+      const r = comp.getBoundingClientRect();
+      comp.style.setProperty('--mx', (e.clientX - r.left)+'px');
+      comp.style.setProperty('--my', (e.clientY - r.top)+'px');
+    });
+  })();
+
+  /* ---------- Click Spark: faíscas ao gerar — efeito ReactBits ---------- */
+  function clickSpark(x,y){
+    if(reduce) return;
+    const n = 10, dist = 34;
+    for(let i=0;i<n;i++){
+      const s = document.createElement('span');
+      const ang = (Math.PI*2*i)/n + Math.random()*.4;
+      s.style.cssText = 'position:fixed;left:'+x+'px;top:'+y+'px;width:4px;height:4px;border-radius:50%;'+
+        'background:'+(i%2?'var(--flame-soft)':'var(--cyan)')+';pointer-events:none;z-index:50;'+
+        'transform:translate(-50%,-50%);transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .5s';
+      document.body.appendChild(s);
+      requestAnimationFrame(()=>{
+        s.style.transform = 'translate(calc(-50% + '+(Math.cos(ang)*dist)+'px),calc(-50% + '+(Math.sin(ang)*dist)+'px)) scale(0)';
+        s.style.opacity = '0';
+      });
+      setTimeout(()=>s.remove(), 550);
+    }
+  }
 
   function setRepo(v){ $('#repoUrl').value = v; }
 
@@ -592,6 +629,7 @@ Execute o arquivo \`main.py\` passando a operação e os dois números:
 
   // events
   $('#genBtn').addEventListener('click', generate);
+  $('#genBtn').addEventListener('click', e=> clickSpark(e.clientX, e.clientY));
   $('#repoUrl').addEventListener('keydown', e=>{ if(e.key==='Enter') generate(); });
   document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>selectDoc(t.dataset.doc, false)));
   $('#viewToggle').addEventListener('click', e=>{
